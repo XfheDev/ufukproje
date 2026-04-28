@@ -35,22 +35,22 @@ function App() {
   return (
     <div className="app-container">
       <div className="grid-bg"></div>
-      
+
       <Navbar setView={setView} score={score} />
-      
+
       <main>
         {view === 'menu' && <MainMenu setView={setView} />}
         {view === 'escape' && <LabEscape setView={setView} />}
         {view === 'hunter' && <HazardHunter setView={setView} addScore={addScore} />}
       </main>
 
-      <footer style={{ 
-        textAlign: 'center', 
-        padding: '40px 20px', 
+      <footer style={{
+        textAlign: 'center',
+        padding: '40px 20px',
         color: 'var(--text-muted)',
         fontSize: '0.9rem'
       }}>
-        <p>&copy; 2026 Ufuk UZUN 9/B • Eğitici Kimya Simülasyonu</p>
+        <p>&copy; 2026 Ufuk UZUN 9/B</p>
       </footer>
     </div>
   );
