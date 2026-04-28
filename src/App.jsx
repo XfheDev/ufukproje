@@ -41,7 +41,7 @@ function App() {
           setUser(session?.user ?? null);
         });
         
-        return () => authListener.subscription.unsubscribe();
+        // Dinleyiciyi temizlemek için bir mekanizma eklemiyoruz çünkü bu ana bileşen
       }
       setLoading(false);
     };
