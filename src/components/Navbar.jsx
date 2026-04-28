@@ -21,7 +21,7 @@ const Navbar = ({ setView, score }) => {
         onClick={() => setView('menu')}
       >
         <FlaskConical size={32} color="var(--primary)" />
-        <h1 style={{ fontSize: '1.5rem', margin: 0 }} className="hero-text">ChemLab Pro</h1>
+        <h1 style={{ fontSize: '1.5rem', margin: 0 }} className="hero-text">Ufuk UZUN</h1>
       </div>
       
       <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
