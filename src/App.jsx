@@ -50,7 +50,7 @@ function App() {
         color: 'var(--text-muted)',
         fontSize: '0.9rem'
       }}>
-        <p>&copy; 2026 ChemLab Pro MVP • Eğitici Kimya Simülasyonu</p>
+        <p>&copy; 2026 Ufuk UZUN 9/B • Eğitici Kimya Simülasyonu</p>
       </footer>
     </div>
   );
