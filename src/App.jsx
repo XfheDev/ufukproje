@@ -4,8 +4,10 @@ import MainMenu from './components/MainMenu';
 import LabEscape from './components/LabEscape';
 import HazardHunter from './components/HazardHunter';
 import Leaderboard from './components/Leaderboard';
+import Settings from './components/Settings';
 import Auth from './components/Auth';
 import { supabase } from './lib/supabase';
+import { Settings as SettingsIcon } from 'lucide-react';
 
 // Çerez (Cookie) yardımcı fonksiyonları
 const setCookie = (name, value, days) => {
@@ -37,11 +39,15 @@ function App() {
         const { data: { session } } = await supabase.auth.getSession();
         setUser(session?.user ?? null);
         
-        const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
+        const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
           setUser(session?.user ?? null);
+          // Eğer şifre sıfırlama linkiyle gelindiyse ayarlar sayfasına yönlendir
+          if (event === 'PASSWORD_RECOVERY') {
+            setView('settings');
+          }
         });
         
-        // Dinleyiciyi temizlemek için bir mekanizma eklemiyoruz çünkü bu ana bileşen
+        // return () => authListener.subscription.unsubscribe();
       }
       setLoading(false);
     };
@@ -99,7 +105,6 @@ function App() {
   };
 
   // Eğer kullanıcı giriş yapmadıysa Auth ekranını göster
-  // Not: Supabase bağlı değilse bile ekranı görebilmeniz için kontrolü gevşettik
   if (!user && !loading) {
     return <Auth onLogin={setUser} />;
   }
@@ -115,12 +120,16 @@ function App() {
         {view === 'escape' && <LabEscape setView={setView} />}
         {view === 'hunter' && <HazardHunter setView={setView} addScore={addScore} />}
         {view === 'leaderboard' && <Leaderboard scores={globalScores} />}
+        {view === 'settings' && <Settings user={user} setView={setView} />}
 
         {/* Ana menüde ek butonlar */}
         {view === 'menu' && (
-          <div style={{ textAlign: 'center', marginTop: '20px', display: 'flex', gap: '10px', justifyContent: 'center' }}>
+          <div style={{ textAlign: 'center', marginTop: '20px', display: 'flex', flexWrap: 'wrap', gap: '10px', justifyContent: 'center' }}>
             <button className="btn btn-secondary" onClick={() => setView('leaderboard')}>
-               🏆 Liderlik Tablosunu Gör
+               🏆 Liderlik Tablosu
+            </button>
+            <button className="btn btn-secondary" style={{ background: 'white' }} onClick={() => setView('settings')}>
+               ⚙️ Ayarlar
             </button>
             {supabase && (
               <button className="btn btn-secondary" style={{ background: 'white' }} onClick={handleLogout}>
