@@ -3,6 +3,9 @@ import Navbar from './components/Navbar';
 import MainMenu from './components/MainMenu';
 import LabEscape from './components/LabEscape';
 import HazardHunter from './components/HazardHunter';
+import Leaderboard from './components/Leaderboard';
+import Auth from './components/Auth';
+import { supabase } from './lib/supabase';
 
 // Çerez (Cookie) yardımcı fonksiyonları
 const setCookie = (name, value, days) => {
@@ -19,34 +22,118 @@ const getCookie = (name) => {
 
 function App() {
   const [view, setView] = useState('menu');
+  const [user, setUser] = useState(null);
   const [score, setScore] = useState(() => {
     const savedScore = getCookie('chemLabScore');
     return savedScore ? parseInt(savedScore, 10) : 0;
   });
+  const [globalScores, setGlobalScores] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  // Oturum kontrolü
+  useEffect(() => {
+    const checkUser = async () => {
+      if (supabase) {
+        const { data: { session } } = await supabase.auth.getSession();
+        setUser(session?.user ?? null);
+        
+        const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
+          setUser(session?.user ?? null);
+        });
+        
+        return () => authListener.subscription.unsubscribe();
+      }
+      setLoading(false);
+    };
+    checkUser();
+  }, []);
 
   useEffect(() => {
-    setCookie('chemLabScore', score, 30); // 30 gün sakla
+    setCookie('chemLabScore', score, 30);
   }, [score]);
 
-  const addScore = (points) => {
-    setScore(prev => prev + points);
+  // Skorları yükle
+  useEffect(() => {
+    const fetchScores = async () => {
+      if (supabase && user) {
+        const { data } = await supabase
+          .from('leaderboard')
+          .select('*')
+          .order('score', { ascending: false })
+          .limit(10);
+        if (data) setGlobalScores(data);
+      } else if (!supabase) {
+        const localScores = JSON.parse(localStorage.getItem('chemLabLocalLeaderboard') || '[]');
+        setGlobalScores(localScores);
+      }
+    };
+    fetchScores();
+  }, [view, user]);
+
+  const addScore = async (points) => {
+    const newScore = score + points;
+    setScore(newScore);
+    
+    if (user) {
+      const playerName = user.user_metadata?.username || user.email.split('@')[0];
+      const scoreEntry = { name: playerName, score: newScore };
+      
+      if (supabase) {
+        await supabase.from('leaderboard').upsert([scoreEntry], { onConflict: 'name' });
+      } else {
+        const localScores = JSON.parse(localStorage.getItem('chemLabLocalLeaderboard') || '[]');
+        const existing = localScores.findIndex(s => s.name === playerName);
+        if (existing >= 0) {
+          if (localScores[existing].score < newScore) localScores[existing].score = newScore;
+        } else {
+          localScores.push(scoreEntry);
+        }
+        localStorage.setItem('chemLabLocalLeaderboard', JSON.stringify(localScores.sort((a, b) => b.score - a.score)));
+      }
+    }
   };
+
+  const handleLogout = async () => {
+    if (supabase) await supabase.auth.signOut();
+    setUser(null);
+  };
+
+  // Eğer Supabase bağlı değilse veya kullanıcı giriş yapmadıysa Auth ekranını göster
+  // Ancak Supabase yoksa (lokal geliştirme) direkt menüye geçebiliriz
+  if (supabase && !user) {
+    return <Auth onLogin={setUser} />;
+  }
 
   return (
     <div className="app-container">
       <div className="grid-bg"></div>
-
+      
       <Navbar setView={setView} score={score} />
-
+      
       <main>
         {view === 'menu' && <MainMenu setView={setView} />}
         {view === 'escape' && <LabEscape setView={setView} />}
         {view === 'hunter' && <HazardHunter setView={setView} addScore={addScore} />}
+        {view === 'leaderboard' && <Leaderboard scores={globalScores} />}
+
+        {/* Ana menüde ek butonlar */}
+        {view === 'menu' && (
+          <div style={{ textAlign: 'center', marginTop: '20px', display: 'flex', gap: '10px', justifyContent: 'center' }}>
+            <button className="btn btn-secondary" onClick={() => setView('leaderboard')}>
+               🏆 Liderlik Tablosunu Gör
+            </button>
+            {supabase && (
+              <button className="btn btn-secondary" style={{ background: 'white' }} onClick={handleLogout}>
+                🚪 Çıkış Yap ({user?.user_metadata?.username || user?.email?.split('@')[0]})
+              </button>
+            )}
+          </div>
+        )}
       </main>
 
-      <footer style={{
-        textAlign: 'center',
-        padding: '40px 20px',
+      <footer style={{ 
+        textAlign: 'center', 
+        padding: '40px 20px', 
         color: 'var(--text-muted)',
         fontSize: '0.9rem'
       }}>
