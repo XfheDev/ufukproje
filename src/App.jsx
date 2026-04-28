@@ -98,9 +98,9 @@ function App() {
     setUser(null);
   };
 
-  // Eğer Supabase bağlı değilse veya kullanıcı giriş yapmadıysa Auth ekranını göster
-  // Ancak Supabase yoksa (lokal geliştirme) direkt menüye geçebiliriz
-  if (supabase && !user) {
+  // Eğer kullanıcı giriş yapmadıysa Auth ekranını göster
+  // Not: Supabase bağlı değilse bile ekranı görebilmeniz için kontrolü gevşettik
+  if (!user && !loading) {
     return <Auth onLogin={setUser} />;
   }
 
@@ -133,11 +133,14 @@ function App() {
 
       <footer style={{ 
         textAlign: 'center', 
-        padding: '40px 20px', 
+        padding: '60px 20px', 
         color: 'var(--text-muted)',
-        fontSize: '0.9rem'
+        fontSize: '1rem',
+        letterSpacing: '1px'
       }}>
-        <p>&copy; 2026 Ufuk UZUN 9/B</p>
+        <p style={{ fontWeight: 800, color: 'var(--primary)' }}>
+          &copy; 2026 • Projeyi Geliştiren: <span style={{ textDecoration: 'underline' }}>Ufuk UZUN 9/B</span>
+        </p>
       </footer>
     </div>
   );
