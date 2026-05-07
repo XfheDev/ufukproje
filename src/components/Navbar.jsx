@@ -1,4 +1,3 @@
-import React from 'react';
 import { FlaskConical, Home, Trophy } from 'lucide-react';
 
 const Navbar = ({ setView, score }) => {

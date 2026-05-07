@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { equipmentData } from '../data/equipmentData';
 import { CheckCircle2, XCircle, ArrowRight, RotateCcw, Beaker, FlaskConical, TestTube2, Pipette } from 'lucide-react';
 

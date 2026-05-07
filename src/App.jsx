@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import Navbar from './components/Navbar';
 import MainMenu from './components/MainMenu';
 import LabEscape from './components/LabEscape';
@@ -7,7 +7,6 @@ import Leaderboard from './components/Leaderboard';
 import Settings from './components/Settings';
 import Auth from './components/Auth';
 import { supabase } from './lib/supabase';
-import { Settings as SettingsIcon } from 'lucide-react';
 
 // Çerez (Cookie) yardımcı fonksiyonları
 const setCookie = (name, value, days) => {
@@ -34,24 +33,31 @@ function App() {
 
   // Oturum kontrolü
   useEffect(() => {
+    let authListener = null;
+
     const checkUser = async () => {
       if (supabase) {
         const { data: { session } } = await supabase.auth.getSession();
         setUser(session?.user ?? null);
         
-        const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
           setUser(session?.user ?? null);
-          // Eğer şifre sıfırlama linkiyle gelindiyse ayarlar sayfasına yönlendir
           if (event === 'PASSWORD_RECOVERY') {
             setView('settings');
           }
         });
-        
-        // return () => authListener.subscription.unsubscribe();
+        authListener = subscription;
       }
       setLoading(false);
     };
+
     checkUser();
+
+    return () => {
+      if (authListener) {
+        authListener.unsubscribe();
+      }
+    };
   }, []);
 
   useEffect(() => {

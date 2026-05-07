@@ -1,5 +1,4 @@
-import React from 'react';
-import { ShieldAlert, DoorOpen, Beaker, Zap } from 'lucide-react';
+import { ShieldAlert, DoorOpen, Zap } from 'lucide-react';
 
 const MainMenu = ({ setView }) => {
   return (

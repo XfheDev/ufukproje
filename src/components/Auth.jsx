@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { LogIn, UserPlus, Mail, Lock, AlertCircle, ArrowRight, KeyRound } from 'lucide-react';
 
@@ -19,11 +19,12 @@ const Auth = ({ onLogin }) => {
 
     try {
       if (mode === 'login') {
-        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+        const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
-        onLogin(data.user);
+        const { data: { user } } = await supabase.auth.getUser();
+        onLogin(user);
       } else if (mode === 'signup') {
-        const { data, error } = await supabase.auth.signUp({
+        const { error } = await supabase.auth.signUp({
           email,
           password,
           options: { data: { username } }

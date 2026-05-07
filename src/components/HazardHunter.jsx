@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { hazardData } from '../data/hazardData';
-import { ShieldAlert, CheckCircle2, XCircle, ArrowRight, Clock, Info } from 'lucide-react';
+import { ShieldAlert, CheckCircle2, XCircle, ArrowRight, Clock } from 'lucide-react';
 
 const HazardHunter = ({ setView, addScore }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -10,19 +10,7 @@ const HazardHunter = ({ setView, addScore }) => {
   const [timeLeft, setTimeLeft] = useState(15);
   const [timerActive, setTimerActive] = useState(true);
 
-  useEffect(() => {
-    let timer;
-    if (timerActive && timeLeft > 0 && !feedback) {
-      timer = setInterval(() => {
-        setTimeLeft((prev) => prev - 1);
-      }, 1000);
-    } else if (timeLeft === 0 && !feedback) {
-      handleChoice(null); // Süre bitti
-    }
-    return () => clearInterval(timer);
-  }, [timeLeft, timerActive, feedback]);
-
-  const handleChoice = (option) => {
+  const handleChoice = useCallback((option) => {
     if (feedback) return;
     
     setSelectedOption(option);
@@ -34,7 +22,19 @@ const HazardHunter = ({ setView, addScore }) => {
     } else {
       setFeedback('incorrect');
     }
-  };
+  }, [feedback, currentIndex, addScore, timeLeft]);
+
+  useEffect(() => {
+    let timer;
+    if (timerActive && timeLeft > 0 && !feedback) {
+      timer = setInterval(() => {
+        setTimeLeft((prev) => prev - 1);
+      }, 1000);
+    } else if (timeLeft === 0 && !feedback) {
+      setTimeout(() => handleChoice(null), 0); // Süre bitti
+    }
+    return () => clearInterval(timer);
+  }, [timeLeft, timerActive, feedback, handleChoice]);
 
   const nextQuestion = () => {
     if (currentIndex < hazardData.length - 1) {
