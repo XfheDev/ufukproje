@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Navbar from './components/Navbar';
 import MainMenu from './components/MainMenu';
 import LabEscape from './components/LabEscape';
@@ -82,28 +82,32 @@ function App() {
     fetchScores();
   }, [view, user]);
 
-  const addScore = async (points) => {
-    const newScore = score + points;
-    setScore(newScore);
-    
-    if (user) {
-      const playerName = user.user_metadata?.username || user.email.split('@')[0];
-      const scoreEntry = { name: playerName, score: newScore };
+  const addScore = useCallback(async (points) => {
+    setScore(prevScore => {
+      const newScore = prevScore + points;
       
-      if (supabase) {
-        await supabase.from('leaderboard').upsert([scoreEntry], { onConflict: 'name' });
-      } else {
-        const localScores = JSON.parse(localStorage.getItem('chemLabLocalLeaderboard') || '[]');
-        const existing = localScores.findIndex(s => s.name === playerName);
-        if (existing >= 0) {
-          if (localScores[existing].score < newScore) localScores[existing].score = newScore;
+      if (user) {
+        const playerName = user.user_metadata?.username || user.email.split('@')[0];
+        const scoreEntry = { name: playerName, score: newScore };
+        
+        if (supabase) {
+          supabase.from('leaderboard').upsert([scoreEntry], { onConflict: 'name' }).then(({ error }) => {
+            if (error) console.error("Skor güncellenirken hata oluştu:", error);
+          });
         } else {
-          localScores.push(scoreEntry);
+          const localScores = JSON.parse(localStorage.getItem('chemLabLocalLeaderboard') || '[]');
+          const existing = localScores.findIndex(s => s.name === playerName);
+          if (existing >= 0) {
+            if (localScores[existing].score < newScore) localScores[existing].score = newScore;
+          } else {
+            localScores.push(scoreEntry);
+          }
+          localStorage.setItem('chemLabLocalLeaderboard', JSON.stringify(localScores.sort((a, b) => b.score - a.score)));
         }
-        localStorage.setItem('chemLabLocalLeaderboard', JSON.stringify(localScores.sort((a, b) => b.score - a.score)));
       }
-    }
-  };
+      return newScore;
+    });
+  }, [user]);
 
   const handleLogout = async () => {
     if (supabase) await supabase.auth.signOut();

@@ -10,31 +10,36 @@ const HazardHunter = ({ setView, addScore }) => {
   const [timeLeft, setTimeLeft] = useState(15);
   const [timerActive, setTimerActive] = useState(true);
 
-  const handleChoice = useCallback((option) => {
+  const handleChoice = useCallback((option, currentTIme) => {
     if (feedback) return;
     
     setSelectedOption(option);
     setTimerActive(false);
 
-    if (option === hazardData[currentIndex].correct) {
+    if (option === hazardData[currentIndex]?.correct) {
       setFeedback('correct');
-      addScore(10 + timeLeft); // Hız bonusu
+      addScore(10 + (currentTIme || 0)); // Hız bonusu
     } else {
       setFeedback('incorrect');
     }
-  }, [feedback, currentIndex, addScore, timeLeft]);
+  }, [feedback, currentIndex, addScore]);
 
   useEffect(() => {
     let timer;
     if (timerActive && timeLeft > 0 && !feedback) {
       timer = setInterval(() => {
-        setTimeLeft((prev) => prev - 1);
+        setTimeLeft((prev) => {
+          if (prev <= 1) {
+            clearInterval(timer);
+            handleChoice(null, 0); // Süre bitti
+            return 0;
+          }
+          return prev - 1;
+        });
       }, 1000);
-    } else if (timeLeft === 0 && !feedback) {
-      setTimeout(() => handleChoice(null), 0); // Süre bitti
     }
     return () => clearInterval(timer);
-  }, [timeLeft, timerActive, feedback, handleChoice]);
+  }, [timerActive, feedback, handleChoice]);
 
   const nextQuestion = () => {
     if (currentIndex < hazardData.length - 1) {
@@ -122,7 +127,7 @@ const HazardHunter = ({ setView, addScore }) => {
                 opacity: feedback && option !== currentHazard.correct && option !== selectedOption ? 0.5 : 1,
                 boxShadow: selectedOption === option ? 'none' : '4px 4px 0px 0px var(--primary)'
               }}
-              onClick={() => handleChoice(option)}
+              onClick={() => handleChoice(option, timeLeft)}
             >
               <div style={{ 
                 width: '30px', 
